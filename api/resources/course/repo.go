@@ -23,8 +23,7 @@ func NewRepo(db *sql.DB) Repository {
 }
 
 func (r *repository) FetchCourses() ([]Course, error) {
-
-	rows, err := r.db.Query(`SELECT * FROM courses`)
+	rows, err := r.db.Query(`SELECT * FROM course`)
 
 	// PGX returns an error if a query returns no results. We'll return
 	// an empty error + no error
