@@ -15,7 +15,7 @@ import (
 func main() {
 	log.Println("... Starting server")
 
-	cfg, err := config.Load(".env.local")
+	cfg, err := config.Load(".env")
 	if err != nil {
 		log.Fatalf("Unable to load server config, error: %s", err.Error())
 	}
