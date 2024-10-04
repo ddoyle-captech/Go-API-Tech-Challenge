@@ -6,22 +6,6 @@ import (
 	"github.com/spf13/viper"
 )
 
-/*
-ENV: dev
-LOG_LEVEL: DEBUG
-
-DATABASE_CONTAINER_NAME: courses-db-container
-DATABASE_NAME: coursesDB
-DATABASE_USER: courses-db-user
-DATABASE_PASSWORD: courses-db-password
-DATABASE_HOST: localhost
-DATABASE_PORT: 5432
-DATABASE_RETRY_DURATION_SECONDS: 3
-
-HTTP_DOMAIN: localhost
-HTTP_PORT: :8080
-*/
-
 type Config struct {
 	Env      string `mapstructure:"ENV"`
 	LogLevel string `mapstructure:"LOG_LEVEL"`

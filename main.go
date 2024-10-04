@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 func main() {
@@ -49,5 +51,6 @@ func connectToDB(cfg *config.Config) *sql.DB {
 		log.Fatalf("Unable to connect to database, error: %s", err.Error())
 	}
 
+	log.Println("Connected to database successfully!")
 	return db
 }
