@@ -8,6 +8,8 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
+var ErrCourseNotFound = errors.New("course not found")
+
 // Repository is responsible for communicating with the API's database.
 type Repository interface {
 	FetchCourses() ([]Course, error)
@@ -44,7 +46,7 @@ func (r *repository) FetchCourseByID(id int) (Course, error) {
 	rows, err := r.db.Query(`SELECT * FROM course WHERE id = $1`, id)
 
 	if err != nil && errors.Is(err, pgx.ErrNoRows) {
-		return Course{}, nil
+		return Course{}, ErrCourseNotFound
 	}
 	if err != nil {
 		return Course{}, fmt.Errorf("unable to complete query, error: %s", err.Error())

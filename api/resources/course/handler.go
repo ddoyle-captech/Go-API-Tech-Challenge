@@ -3,8 +3,13 @@ package course
 import (
 	"Go-API-Tech-Challenge/api"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"log"
 	"net/http"
+	"strconv"
+
+	"github.com/go-chi/chi/v5"
 )
 
 // Handler is responsible for all HTTP communication for the /api/course endpoints. It
@@ -53,9 +58,40 @@ func (h *handler) ListCourses(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *handler) GetCourse(w http.ResponseWriter, r *http.Request) {
-	// id := chi.URLParam(r, "id")
+	idParam := chi.URLParam(r, "id")
 
-	// w.Write(body)
+	// Convert id URL parameter to string. If its an invalid integer, return 400 Bad Request
+	id, err := strconv.Atoi(idParam)
+	if err != nil {
+		log.Printf("received invalid course ID, error: %s\n", err.Error())
+		resp := api.ErrorResponse{
+			Message: fmt.Sprintf("course ID: %s is invalid", idParam),
+		}
+		resp.Send(w, http.StatusBadRequest)
+		return
+	}
+
+	c, err := h.r.FetchCourseByID(id)
+
+	// If no course is found for the given ID, return a 404 Not Found
+	if err != nil && errors.Is(err, ErrCourseNotFound) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	// Serialize course to JSON
+	body, err := json.Marshal(c)
+	if err != nil {
+		log.Printf("unable to serialize course to JSON, error: %s\n", err.Error())
+		resp := api.ErrorResponse{
+			Message: fmt.Sprintf("unable to fetch course with ID: %d", id),
+		}
+		resp.Send(w, http.StatusInternalServerError)
+		return
+	}
+
+	w.Write(body)
 	w.Header().Set("Content-Type", "application/json")
 }
 
