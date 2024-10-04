@@ -10,11 +10,11 @@ import (
 
 // Creates a concrete implementation of chi.Router. Registers all API
 // endpoints and adds any middleware.
-func New() chi.Router {
+func New(cr course.Repository) chi.Router {
 	r := chi.NewRouter()
 
 	ph := person.NewHandler()
-	ch := course.NewHandler()
+	ch := course.NewHandler(cr)
 
 	r.Route("/api/person", func(r chi.Router) {
 		r.Get("/", http.HandlerFunc(ph.ListPeople))

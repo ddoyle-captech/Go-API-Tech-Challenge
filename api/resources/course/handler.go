@@ -11,10 +11,13 @@ type Handler interface {
 }
 
 type handler struct {
+	r Repository
 }
 
-func NewHandler() Handler {
-	return &handler{}
+func NewHandler(r Repository) Handler {
+	return &handler{
+		r: r,
+	}
 }
 
 func (h *handler) ListCourses(w http.ResponseWriter, r *http.Request) {

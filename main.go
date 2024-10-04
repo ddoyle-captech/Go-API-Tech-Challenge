@@ -1,7 +1,9 @@
 package main
 
 import (
+	"Go-API-Tech-Challenge/api/resources/course"
 	"Go-API-Tech-Challenge/api/router"
+	"database/sql"
 	"log"
 	"net/http"
 )
@@ -9,8 +11,11 @@ import (
 func main() {
 	log.Println("... Starting server")
 
+	// TODO: add proper DB connection w/ driver + connection info
+	cr := course.NewRepo(&sql.DB{})
+
 	s := &http.Server{
-		Handler: router.New(),
+		Handler: router.New(cr),
 		Addr:    ":8000",
 	}
 
