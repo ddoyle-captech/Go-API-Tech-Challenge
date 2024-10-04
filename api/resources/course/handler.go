@@ -7,6 +7,8 @@ import (
 	"net/http"
 )
 
+// Handler is responsible for all HTTP communication for the /api/course endpoints. It
+// manages parsing params and serializing responses to return to callers.
 type Handler interface {
 	ListCourses(w http.ResponseWriter, r *http.Request)
 	GetCourse(w http.ResponseWriter, r *http.Request)
@@ -51,7 +53,10 @@ func (h *handler) ListCourses(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *handler) GetCourse(w http.ResponseWriter, r *http.Request) {
-	panic("not implemented")
+	// id := chi.URLParam(r, "id")
+
+	// w.Write(body)
+	w.Header().Set("Content-Type", "application/json")
 }
 
 func (h *handler) CreateCourse(w http.ResponseWriter, r *http.Request) {
