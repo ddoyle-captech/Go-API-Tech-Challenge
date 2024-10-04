@@ -1,6 +1,11 @@
 package course
 
-import "net/http"
+import (
+	"Go-API-Tech-Challenge/api"
+	"encoding/json"
+	"log"
+	"net/http"
+)
 
 type Handler interface {
 	ListCourses(w http.ResponseWriter, r *http.Request)
@@ -21,7 +26,28 @@ func NewHandler(r Repository) Handler {
 }
 
 func (h *handler) ListCourses(w http.ResponseWriter, r *http.Request) {
-	panic("not implemented")
+	courses, err := h.r.FetchCourses()
+	if err != nil {
+		log.Printf("unable to fetch courses from database, error: %s\n", err.Error())
+		resp := api.ErrorResponse{
+			Message: "unable to fetch courses",
+		}
+		resp.Send(w, http.StatusInternalServerError)
+		return
+	}
+
+	body, err := json.Marshal(courses)
+	if err != nil {
+		log.Printf("unable to serialize courses to JSON, error: %s\n", err.Error())
+		resp := api.ErrorResponse{
+			Message: "unable to fetch courses",
+		}
+		resp.Send(w, http.StatusInternalServerError)
+		return
+	}
+
+	w.Write(body)
+	w.Header().Set("Content-Type", "application/json")
 }
 
 func (h *handler) GetCourse(w http.ResponseWriter, r *http.Request) {
