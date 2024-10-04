@@ -8,8 +8,8 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-// Creates a concrete implementation of chi.Router, registers all API endpoints,
-// and adds any middleware.
+// Creates a concrete implementation of chi.Router. Registers all API
+// endpoints and adds any middleware.
 func New() chi.Router {
 	r := chi.NewRouter()
 
