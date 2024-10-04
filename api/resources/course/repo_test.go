@@ -21,7 +21,10 @@ func TestFetchCourses_Happy(t *testing.T) {
 	defer db.Close()
 
 	mock.ExpectQuery("SELECT \\* FROM course").WillReturnRows(
-		sqlmock.NewRows(courseColumns).AddRow(1, "CS 408 Human Augmentics"),
+		sqlmock.NewRows(courseColumns).
+			AddRow(1, "CS 408 Human Augmentics").
+			AddRow(2, "BIO 101 Intro to Biology").
+			AddRow(3, "MATH 401 Differential Equations"),
 	)
 
 	r := course.NewRepo(db)
@@ -30,14 +33,45 @@ func TestFetchCourses_Happy(t *testing.T) {
 	if err != nil {
 		t.Errorf("expected nil error, received: %s", err.Error())
 	}
-	if len(courses) == 0 {
-		t.Error("expected a list of courses, but received empty list")
+	if len(courses) != 3 {
+		t.Errorf("expected a list of %d courses, but received %d", 3, len(courses))
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("query did not fulfill expectations: %s", err.Error())
 	}
 }
 
-func TestFetchCourses_Sad(t *testing.T) {
+func TestFetchCourseByID_Happy(t *testing.T) {
+	expected := course.Course{
+		ID:   1,
+		Name: "CS 408 Human Augmentics",
+	}
 
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("unexpected error creating a mock DB connection, error: %s", err.Error())
+	}
+	defer db.Close()
+
+	mock.ExpectQuery("SELECT \\* FROM course WHERE id = \\$1").
+		WithArgs(expected.ID).
+		WillReturnRows(
+			sqlmock.NewRows(courseColumns).AddRow(expected.ID, expected.Name),
+		)
+
+	r := course.NewRepo(db)
+	result, err := r.FetchCourseByID(1)
+
+	if err != nil {
+		t.Errorf("expected nil error, received: %s", err.Error())
+	}
+	if result.ID != expected.ID {
+		t.Errorf("expected course ID: %d, received: %d", expected.ID, result.ID)
+	}
+	if result.Name != expected.Name {
+		t.Errorf("expected course name: %s, received: %s", expected.Name, result.Name)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("query did not fulfill expectations: %s", err.Error())
+	}
 }
