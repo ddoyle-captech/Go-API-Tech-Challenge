@@ -14,7 +14,7 @@ var ErrCourseNotFound = errors.New("course not found")
 type Repository interface {
 	FetchCourses() ([]Course, error)
 	FetchCourseByID(id int) (Course, error)
-	UpdateCourse(id int, name string) error
+	UpdateCourseByID(id int, name string) error
 }
 
 type repository struct {
@@ -62,16 +62,23 @@ func (r *repository) FetchCourseByID(id int) (Course, error) {
 	return courses[0], err
 }
 
-func (r *repository) UpdateCourse(id int, name string) error {
+func (r *repository) UpdateCourseByID(id int, name string) error {
 	statement, err := r.db.Prepare(`UPDATE course SET name = $1 WHERE id = $2`)
 	if err != nil {
 		return fmt.Errorf("unable to prepare course update, error: %w", err)
 	}
 	defer statement.Close()
 
-	_, err = statement.Exec(name, id)
+	result, err := statement.Exec(name, id)
 	if err != nil {
 		return fmt.Errorf("course update failed, error: %w", err)
+	}
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("unable to fetch how many courses were updated, error: %w", err)
+	}
+	if affected == 0 {
+		return ErrCourseNotFound
 	}
 	return nil
 }

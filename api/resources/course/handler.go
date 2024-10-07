@@ -133,7 +133,13 @@ func (h *handler) UpdateCourse(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.r.UpdateCourse(updated.ID, updated.Name)
+	err = h.r.UpdateCourseByID(updated.ID, updated.Name)
+
+	if err != nil && errors.Is(err, ErrCourseNotFound) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
 	if err != nil {
 		log.Printf("unable to update course with ID: %d, error: %s\n", id, err.Error())
 		resp := api.ErrorResponse{

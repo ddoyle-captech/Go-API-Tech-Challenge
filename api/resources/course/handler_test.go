@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/go-chi/chi/v5"
@@ -136,6 +137,77 @@ func TestGetCourse_Sad(t *testing.T) {
 
 			h.GetCourse(w, req)
 
+			if w.Result().StatusCode != test.expected {
+				t.Errorf("expected response status code: %d, received: %d", test.expected, w.Result().StatusCode)
+			}
+		})
+	}
+}
+
+func TestUpdateCourse_Happy(t *testing.T) {
+	r := &mock.Repository{
+		UpdateCourseByIDFunc: func(id int, name string) error {
+			return nil
+		},
+	}
+	body := strings.NewReader("{\"name\": \"UI Programming\"}")
+	h := course.NewHandler(r)
+
+	w := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPut, "/api/course/1", body)
+	req = addURLParamToRequest(req, "id", "1")
+
+	h.UpdateCourse(w, req)
+
+	if w.Result().StatusCode != http.StatusOK {
+		t.Errorf("expected response status code: %d, received: %d", http.StatusOK, w.Result().StatusCode)
+	}
+}
+
+func TestUpdateCourse_Sad(t *testing.T) {
+	tests := map[string]struct {
+		id       string
+		request  string
+		err      error
+		expected int
+	}{
+		"if course ID is invalid, return a 400 Bad Request": {
+			id:       "dnajdbahwbdhawdbhk",
+			expected: http.StatusBadRequest,
+		},
+		"if course update request is invalid, return a 400 Bad Request": {
+			id:       "1",
+			request:  "dawdawdwadwdwadwad dwdwd12",
+			expected: http.StatusBadRequest,
+		},
+		"if no courses are found, return a 404 Not Found": {
+			id:       "1",
+			request:  "{\"name\": \"UI Programming\"}",
+			err:      course.ErrCourseNotFound,
+			expected: http.StatusNotFound,
+		},
+		"if repo returns an error, return a 500 Internal Server Error": {
+			id:       "1",
+			request:  "{\"name\": \"UI Programming\"}",
+			err:      errors.New("database is missing"),
+			expected: http.StatusInternalServerError,
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			r := &mock.Repository{
+				UpdateCourseByIDFunc: func(id int, name string) error {
+					return test.err
+				},
+			}
+			h := course.NewHandler(r)
+
+			w := httptest.NewRecorder()
+			req := httptest.NewRequest(http.MethodPut, "/api/course/"+test.id, strings.NewReader(test.request))
+			req = addURLParamToRequest(req, "id", test.id)
+
+			h.UpdateCourse(w, req)
 			if w.Result().StatusCode != test.expected {
 				t.Errorf("expected response status code: %d, received: %d", test.expected, w.Result().StatusCode)
 			}

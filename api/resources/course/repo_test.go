@@ -76,7 +76,7 @@ func TestFetchCourseByID_Happy(t *testing.T) {
 	}
 }
 
-func TestUpdateCourse_Happy(t *testing.T) {
+func TestUpdateCourseByID_Happy(t *testing.T) {
 	courseID := 1
 	courseName := "UI Design"
 
@@ -93,7 +93,7 @@ func TestUpdateCourse_Happy(t *testing.T) {
 
 	r := course.NewRepo(db)
 
-	err = r.UpdateCourse(courseID, courseName)
+	err = r.UpdateCourseByID(courseID, courseName)
 	if err != nil {
 		t.Errorf("expected a nil error, received: %+v", err)
 	}
