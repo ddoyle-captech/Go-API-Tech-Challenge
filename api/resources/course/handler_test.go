@@ -5,11 +5,12 @@ import (
 	"Go-API-Tech-Challenge/test/mock"
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 )
 
 func TestListCourses_Happy(t *testing.T) {
@@ -82,26 +83,71 @@ func TestGetCourse_Happy(t *testing.T) {
 			}, nil
 		},
 	}
-
 	h := course.NewHandler(r)
 
-	// Set up the chi router and register the handler
-	router := chi.NewRouter()
-	router.Get("/api/course/{id}", http.HandlerFunc(h.GetCourse))
-
-	// Set-up mock HTTP communication
-	rctx := chi.NewRouteContext()
-	rctx.URLParams.Add("id", "1")
-
-	ctx := context.WithValue(context.Background(), chi.RouteCtxKey, rctx)
-
 	w := httptest.NewRecorder()
-	req := httptest.NewRequestWithContext(ctx, http.MethodGet, "/api/course/1", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/course/1", nil)
+	req = addURLParamToRequest(req, "id", "1")
 
-	// Execute the HTTP request
-	router.ServeHTTP(w, req)
+	h.GetCourse(w, req)
 
 	if w.Result().StatusCode != http.StatusOK {
 		t.Errorf("expected response status code: %d, received: %d", http.StatusOK, w.Result().StatusCode)
 	}
+}
+
+func TestGetCourse_Sad(t *testing.T) {
+	tests := map[string]struct {
+		courseID string
+		err      error
+		expected int
+	}{
+		"if course ID is invalid, return a 400 Bad Request": {
+			courseID: "vdugavdyuwt9878",
+			err:      nil,
+			expected: http.StatusBadRequest,
+		},
+		"if no courses are found, return a 404 Not Found": {
+			courseID: "1",
+			err:      course.ErrCourseNotFound,
+			expected: http.StatusNotFound,
+		},
+		"if repo returns an error, return a 500 Internal Server Error": {
+			courseID: "1",
+			err:      errors.New("database is missing"),
+			expected: http.StatusInternalServerError,
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			r := &mock.Repository{
+				FetchCourseByIDFunc: func(id int) (course.Course, error) {
+					return course.Course{}, test.err
+				},
+			}
+			h := course.NewHandler(r)
+
+			w := httptest.NewRecorder()
+			url := fmt.Sprintf("/api/course/%s", test.courseID)
+
+			req := httptest.NewRequest(http.MethodGet, url, nil)
+			req = addURLParamToRequest(req, "id", test.courseID)
+
+			h.GetCourse(w, req)
+
+			if w.Result().StatusCode != test.expected {
+				t.Errorf("expected response status code: %d, received: %d", test.expected, w.Result().StatusCode)
+			}
+		})
+	}
+}
+
+// Because Chi is used to set/parse the URL params, we need to create a Chi context and manually add the URL param value
+// when testing the handler directly. Typically, the router handles this for us.
+func addURLParamToRequest(r *http.Request, key, value string) *http.Request {
+	chiCtx := chi.NewRouteContext()
+	r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, chiCtx))
+	chiCtx.URLParams.Add(key, value)
+	return r
 }

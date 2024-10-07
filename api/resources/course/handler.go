@@ -79,6 +79,15 @@ func (h *handler) GetCourse(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
+	// If the repo returns an error, return a 500
+	if err != nil {
+		log.Printf("unexpected error fetching course with ID: %d, error: %s\n", id, err.Error())
+		resp := api.ErrorResponse{
+			Message: fmt.Sprintf("unable to fetch course with ID: %s", idParam),
+		}
+		resp.Send(w, http.StatusInternalServerError)
+		return
+	}
 
 	// Serialize course to JSON
 	body, err := json.Marshal(c)
