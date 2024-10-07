@@ -75,3 +75,29 @@ func TestFetchCourseByID_Happy(t *testing.T) {
 		t.Errorf("query did not fulfill expectations: %s", err.Error())
 	}
 }
+
+func TestUpdateCourse_Happy(t *testing.T) {
+	courseID := 1
+	courseName := "UI Design"
+
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("unexpected error creating a mock DB connection, error: %s", err.Error())
+	}
+	defer db.Close()
+
+	mock.ExpectPrepare("UPDATE course SET name = \\$1 WHERE id = \\$2").
+		ExpectExec().
+		WithArgs(courseName, courseID).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	r := course.NewRepo(db)
+
+	err = r.UpdateCourse(courseID, courseName)
+	if err != nil {
+		t.Errorf("expected a nil error, received: %+v", err)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("query did not fulfill expectations: %s", err.Error())
+	}
+}

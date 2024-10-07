@@ -14,6 +14,7 @@ var ErrCourseNotFound = errors.New("course not found")
 type Repository interface {
 	FetchCourses() ([]Course, error)
 	FetchCourseByID(id int) (Course, error)
+	UpdateCourse(id int, name string) error
 }
 
 type repository struct {
@@ -35,7 +36,7 @@ func (r *repository) FetchCourses() ([]Course, error) {
 		return []Course{}, nil
 	}
 	if err != nil {
-		return []Course{}, fmt.Errorf("unable to complete query, error: %s", err.Error())
+		return []Course{}, fmt.Errorf("unable to complete query, error: %w", err)
 	}
 
 	// Map results to Course structs
@@ -49,7 +50,7 @@ func (r *repository) FetchCourseByID(id int) (Course, error) {
 		return Course{}, ErrCourseNotFound
 	}
 	if err != nil {
-		return Course{}, fmt.Errorf("unable to complete query, error: %s", err.Error())
+		return Course{}, fmt.Errorf("unable to complete query, error: %w", err)
 	}
 
 	courses, err := mapRowsToStruct(rows)
@@ -59,6 +60,20 @@ func (r *repository) FetchCourseByID(id int) (Course, error) {
 
 	// We expect only 1 record returned whe querying by ID
 	return courses[0], err
+}
+
+func (r *repository) UpdateCourse(id int, name string) error {
+	statement, err := r.db.Prepare(`UPDATE course SET name = $1 WHERE id = $2`)
+	if err != nil {
+		return fmt.Errorf("unable to prepare course update, error: %w", err)
+	}
+	defer statement.Close()
+
+	_, err = statement.Exec(name, id)
+	if err != nil {
+		return fmt.Errorf("course update failed, error: %w", err)
+	}
+	return nil
 }
 
 func mapRowsToStruct(rows *sql.Rows) ([]Course, error) {
