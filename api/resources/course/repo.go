@@ -14,6 +14,7 @@ var ErrCourseNotFound = errors.New("course not found")
 type Repository interface {
 	FetchCourses() ([]Course, error)
 	FetchCourseByID(id int) (Course, error)
+	InsertCourse(name string) error
 	UpdateCourseByID(id int, name string) error
 }
 
@@ -60,6 +61,20 @@ func (r *repository) FetchCourseByID(id int) (Course, error) {
 
 	// We expect only 1 record returned whe querying by ID
 	return courses[0], err
+}
+
+func (r *repository) InsertCourse(name string) error {
+	statement, err := r.db.Prepare(`INSERT INTO course VALUES($1)`)
+	if err != nil {
+		return fmt.Errorf("unable to prepare course insert, error: %w", err)
+	}
+	defer statement.Close()
+
+	_, err = statement.Exec(name)
+	if err != nil {
+		return fmt.Errorf("course insert failed, error: %w", err)
+	}
+	return nil
 }
 
 func (r *repository) UpdateCourseByID(id int, name string) error {
