@@ -109,7 +109,53 @@ func (h *handler) CreateCourse(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *handler) UpdateCourse(w http.ResponseWriter, r *http.Request) {
-	panic("not implemented")
+	idParam := chi.URLParam(r, "id")
+
+	// Parse URL param
+	id, err := strconv.Atoi(idParam)
+	if err != nil {
+		log.Printf("received invalid course ID, error: %s\n", err.Error())
+		resp := api.ErrorResponse{
+			Message: fmt.Sprintf("course ID: %s is invalid", idParam),
+		}
+		resp.Send(w, http.StatusBadRequest)
+		return
+	}
+
+	// Parse request body
+	var updated Course
+	if err := json.NewDecoder(r.Body).Decode(&updated); err != nil {
+		log.Printf("unable to deserialize course update request body, error: %s\n", err.Error())
+		resp := api.ErrorResponse{
+			Message: "course updates are invalid!",
+		}
+		resp.Send(w, http.StatusBadRequest)
+		return
+	}
+
+	err = h.r.UpdateCourse(updated.ID, updated.Name)
+	if err != nil {
+		log.Printf("unable to update course with ID: %d, error: %s\n", id, err.Error())
+		resp := api.ErrorResponse{
+			Message: fmt.Sprintf("unable to update course with ID: %d", id),
+		}
+		resp.Send(w, http.StatusInternalServerError)
+		return
+	}
+
+	// Serialize course to JSON
+	body, err := json.Marshal(updated)
+	if err != nil {
+		log.Printf("unable to serialize course to JSON, error: %s\n", err.Error())
+		resp := api.ErrorResponse{
+			Message: fmt.Sprintf("unable to update course with ID: %d", id),
+		}
+		resp.Send(w, http.StatusInternalServerError)
+		return
+	}
+
+	w.Write(body)
+	w.Header().Set("Content-Type", "application/json")
 }
 
 func (h *handler) DeleteCourse(w http.ResponseWriter, r *http.Request) {
