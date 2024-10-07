@@ -64,7 +64,7 @@ func (r *repository) FetchCourseByID(id int) (Course, error) {
 }
 
 func (r *repository) InsertCourse(name string) error {
-	statement, err := r.db.Prepare(`INSERT INTO course VALUES($1)`)
+	statement, err := r.db.Prepare(`INSERT INTO course VALUES ($1)`)
 	if err != nil {
 		return fmt.Errorf("unable to prepare course insert, error: %w", err)
 	}

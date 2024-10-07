@@ -76,6 +76,31 @@ func TestFetchCourseByID_Happy(t *testing.T) {
 	}
 }
 
+func TestInsertCourse_Happy(t *testing.T) {
+	courseName := "Human Augmentics"
+
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("unexpected error creating a mock DB connection, error: %s", err.Error())
+	}
+	defer db.Close()
+
+	mock.ExpectPrepare(`INSERT INTO course VALUES ($1)`).
+		ExpectExec().
+		WithArgs(courseName).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	r := course.NewRepo(db)
+
+	err = r.InsertCourse(courseName)
+	if err != nil {
+		t.Errorf("expected a nil error, received: %+v", err)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("query did not fulfill expectations: %s", err.Error())
+	}
+}
+
 func TestUpdateCourseByID_Happy(t *testing.T) {
 	courseID := 1
 	courseName := "UI Design"
