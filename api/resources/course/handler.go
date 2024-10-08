@@ -61,7 +61,7 @@ func (h *handler) GetCourse(w http.ResponseWriter, r *http.Request) {
 	idParam := chi.URLParam(r, "id")
 
 	// Convert id URL parameter to string. If its an invalid integer, return 400 Bad Request
-	id, err := strconv.Atoi(idParam)
+	id, err := strconv.ParseInt(idParam, 10, 64)
 	if err != nil {
 		log.Printf("received invalid course ID, error: %s\n", err.Error())
 		resp := api.ErrorResponse{
@@ -105,14 +105,47 @@ func (h *handler) GetCourse(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *handler) CreateCourse(w http.ResponseWriter, r *http.Request) {
-	panic("not implemented")
+	// Parse request body
+	var c Course
+	if err := json.NewDecoder(r.Body).Decode(&c); err != nil {
+		log.Printf("unable to deserialize course update request body, error: %s\n", err.Error())
+		resp := api.ErrorResponse{
+			Message: "new course is invalid",
+		}
+		resp.Send(w, http.StatusBadRequest)
+		return
+	}
+
+	newCourse, err := h.r.InsertCourse(c.Name)
+	if err != nil {
+		log.Printf("unable to create course, error: %s\n", err.Error())
+		resp := api.ErrorResponse{
+			Message: "unable to create course",
+		}
+		resp.Send(w, http.StatusInternalServerError)
+		return
+	}
+
+	// Serialize course to JSON
+	body, err := json.Marshal(newCourse)
+	if err != nil {
+		log.Printf("unable to serialize course to JSON, error: %s\n", err.Error())
+		resp := api.ErrorResponse{
+			Message: fmt.Sprintf("unable to fetch course with ID: %d", newCourse.ID),
+		}
+		resp.Send(w, http.StatusInternalServerError)
+		return
+	}
+
+	w.Write(body)
+	w.Header().Set("Content-Type", "application/json")
 }
 
 func (h *handler) UpdateCourse(w http.ResponseWriter, r *http.Request) {
 	idParam := chi.URLParam(r, "id")
 
 	// Parse URL param
-	id, err := strconv.Atoi(idParam)
+	id, err := strconv.ParseInt(idParam, 10, 64)
 	if err != nil {
 		log.Printf("received invalid course ID, error: %s\n", err.Error())
 		resp := api.ErrorResponse{
@@ -127,7 +160,7 @@ func (h *handler) UpdateCourse(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewDecoder(r.Body).Decode(&updated); err != nil {
 		log.Printf("unable to deserialize course update request body, error: %s\n", err.Error())
 		resp := api.ErrorResponse{
-			Message: "course updates are invalid!",
+			Message: "course updates are invalid",
 		}
 		resp.Send(w, http.StatusBadRequest)
 		return

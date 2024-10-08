@@ -92,9 +92,13 @@ func TestInsertCourse_Happy(t *testing.T) {
 
 	r := course.NewRepo(db)
 
-	err = r.InsertCourse(courseName)
+	c, err := r.InsertCourse(courseName)
+
 	if err != nil {
 		t.Errorf("expected a nil error, received: %+v", err)
+	}
+	if c.Name != courseName {
+		t.Errorf("expected course name: %s, received: %s", courseName, c.Name)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("query did not fulfill expectations: %s", err.Error())
@@ -102,7 +106,7 @@ func TestInsertCourse_Happy(t *testing.T) {
 }
 
 func TestUpdateCourseByID_Happy(t *testing.T) {
-	courseID := 1
+	courseID := int64(1)
 	courseName := "UI Design"
 
 	db, mock, err := sqlmock.New()

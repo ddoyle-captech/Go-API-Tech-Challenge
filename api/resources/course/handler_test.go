@@ -77,9 +77,9 @@ func TestListCourses_Sad(t *testing.T) {
 
 func TestGetCourse_Happy(t *testing.T) {
 	r := &mock.Repository{
-		FetchCourseByIDFunc: func(id int) (course.Course, error) {
+		FetchCourseByIDFunc: func(id int64) (course.Course, error) {
 			return course.Course{
-				ID:   1,
+				ID:   int64(1),
 				Name: "My favorite class",
 			}, nil
 		},
@@ -123,7 +123,7 @@ func TestGetCourse_Sad(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			r := &mock.Repository{
-				FetchCourseByIDFunc: func(id int) (course.Course, error) {
+				FetchCourseByIDFunc: func(id int64) (course.Course, error) {
 					return course.Course{}, test.err
 				},
 			}
@@ -146,7 +146,7 @@ func TestGetCourse_Sad(t *testing.T) {
 
 func TestUpdateCourse_Happy(t *testing.T) {
 	r := &mock.Repository{
-		UpdateCourseByIDFunc: func(id int, name string) error {
+		UpdateCourseByIDFunc: func(id int64, name string) error {
 			return nil
 		},
 	}
@@ -197,7 +197,7 @@ func TestUpdateCourse_Sad(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			r := &mock.Repository{
-				UpdateCourseByIDFunc: func(id int, name string) error {
+				UpdateCourseByIDFunc: func(id int64, name string) error {
 					return test.err
 				},
 			}
