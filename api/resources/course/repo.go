@@ -110,6 +110,10 @@ func (r *repository) UpdateCourseByID(id int64, name string) error {
 
 func (r *repository) DeleteCourseByID(id int64) error {
 	statement, err := r.db.Prepare(`DELETE FROM course WHERE id = $1`)
+
+	if err != nil && errors.Is(err, pgx.ErrNoRows) {
+		return ErrCourseNotFound
+	}
 	if err != nil {
 		return fmt.Errorf("unable to prepare course delete, error: %w", err)
 	}

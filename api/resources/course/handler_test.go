@@ -278,6 +278,69 @@ func TestUpdateCourse_Sad(t *testing.T) {
 	}
 }
 
+func TestDeleteCourse_Happy(t *testing.T) {
+	r := &mock.Repository{
+		DeleteCourseByIDFunc: func(id int64) error {
+			return nil
+		},
+	}
+	h := course.NewHandler(r)
+
+	w := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodDelete, "/api/course/1", nil)
+	req = addURLParamToRequest(req, "id", "1")
+
+	h.DeleteCourse(w, req)
+
+	if w.Result().StatusCode != http.StatusAccepted {
+		t.Errorf("expected response status code: %d, received: %d", http.StatusAccepted, w.Result().StatusCode)
+	}
+}
+
+func TestDeleteCourse_Sad(t *testing.T) {
+	tests := map[string]struct {
+		id       string
+		err      error
+		expected int
+	}{
+		"if course ID is invalid, return a 400 Bad Request": {
+			id:       "dnajdbahwbdhawdbhk",
+			expected: http.StatusBadRequest,
+		},
+		"if no courses are found, return a 404 Not Found": {
+			id:       "1",
+			err:      course.ErrCourseNotFound,
+			expected: http.StatusNotFound,
+		},
+		"if repo returns an error, return a 500 Internal Server Error": {
+			id:       "1",
+			err:      errors.New("database is missing"),
+			expected: http.StatusInternalServerError,
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			r := &mock.Repository{
+				DeleteCourseByIDFunc: func(id int64) error {
+					return test.err
+				},
+			}
+			h := course.NewHandler(r)
+
+			w := httptest.NewRecorder()
+			req := httptest.NewRequest(http.MethodDelete, "/api/course/"+test.id, nil)
+			req = addURLParamToRequest(req, "id", test.id)
+
+			h.DeleteCourse(w, req)
+
+			if w.Result().StatusCode != test.expected {
+				t.Errorf("expected response status code: %d, received: %d", test.expected, w.Result().StatusCode)
+			}
+		})
+	}
+}
+
 // Because Chi is used to set/parse the URL params, we need to create a Chi context and manually add the URL param value
 // when testing the handler directly. Typically, the router handles this for us.
 func addURLParamToRequest(r *http.Request, key, value string) *http.Request {

@@ -198,5 +198,33 @@ func (h *handler) UpdateCourse(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *handler) DeleteCourse(w http.ResponseWriter, r *http.Request) {
-	panic("not implemented")
+	idParam := chi.URLParam(r, "id")
+
+	id, err := strconv.ParseInt(idParam, 10, 64)
+	if err != nil {
+		log.Printf("received invalid course ID, error: %s\n", err.Error())
+		resp := api.ErrorResponse{
+			Message: fmt.Sprintf("course ID: %s is invalid", idParam),
+		}
+		resp.Send(w, http.StatusBadRequest)
+		return
+	}
+
+	err = h.r.DeleteCourseByID(id)
+	if err != nil && errors.Is(err, ErrCourseNotFound) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+	if err != nil {
+		log.Printf("unable to delete course with ID: %d, error: %s\n", id, err.Error())
+		resp := api.ErrorResponse{
+			Message: fmt.Sprintf("unable to delete course with ID: %d", id),
+		}
+		resp.Send(w, http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusAccepted)
+	w.Header().Set("Content-Type", "application/json")
 }
