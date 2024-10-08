@@ -130,3 +130,28 @@ func TestUpdateCourseByID_Happy(t *testing.T) {
 		t.Errorf("query did not fulfill expectations: %s", err.Error())
 	}
 }
+
+func TestDeleteCourseByID_Happy(t *testing.T) {
+	courseID := int64(1)
+
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("unexpected error creating a mock DB connection, error: %s", err.Error())
+	}
+	defer db.Close()
+
+	mock.ExpectPrepare("DELETE FROM course WHERE id = \\$1").
+		ExpectExec().
+		WithArgs(courseID).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	r := course.NewRepo(db)
+
+	err = r.DeleteCourseByID(courseID)
+	if err != nil {
+		t.Errorf("expected a nil error, received: %+v", err)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("query did not fulfill expectations: %s", err.Error())
+	}
+}

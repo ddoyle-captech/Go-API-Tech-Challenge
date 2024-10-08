@@ -16,6 +16,7 @@ type Repository interface {
 	FetchCourseByID(id int64) (Course, error)
 	InsertCourse(name string) (Course, error)
 	UpdateCourseByID(id int64, name string) error
+	DeleteCourseByID(id int64) error
 }
 
 type repository struct {
@@ -103,6 +104,20 @@ func (r *repository) UpdateCourseByID(id int64, name string) error {
 	}
 	if affected == 0 {
 		return ErrCourseNotFound
+	}
+	return nil
+}
+
+func (r *repository) DeleteCourseByID(id int64) error {
+	statement, err := r.db.Prepare(`DELETE FROM course WHERE id = $1`)
+	if err != nil {
+		return fmt.Errorf("unable to prepare course delete, error: %w", err)
+	}
+	defer statement.Close()
+
+	_, err = statement.Exec(id)
+	if err != nil {
+		return fmt.Errorf("course delete failed, error: %w", err)
 	}
 	return nil
 }
