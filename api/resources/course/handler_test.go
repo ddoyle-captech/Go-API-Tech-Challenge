@@ -144,6 +144,69 @@ func TestGetCourse_Sad(t *testing.T) {
 	}
 }
 
+func TestCreateCourse_Happy(t *testing.T) {
+	r := &mock.Repository{
+		InsertCourseFunc: func(name string) (course.Course, error) {
+			return course.Course{
+				ID:   int64(1),
+				Name: name,
+			}, nil
+		},
+	}
+	body := strings.NewReader("{\"name\": \"UI Programming\"}")
+	h := course.NewHandler(r)
+
+	w := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/api/course", body)
+
+	h.CreateCourse(w, req)
+
+	if w.Result().StatusCode != http.StatusOK {
+		t.Errorf("expected response status code: %d, received: %d", http.StatusOK, w.Result().StatusCode)
+	}
+}
+
+func TestCreateCourse_Sad(t *testing.T) {
+	tests := map[string]struct {
+		request  string
+		err      error
+		expected int
+	}{
+		"if course update request is invalid, return a 400 Bad Request": {
+			request:  "dawdawdwadwdwadwad dwdwd12",
+			err:      nil,
+			expected: http.StatusBadRequest,
+		},
+		"if repo returns an error, return a 500 Internal Server Error": {
+			request:  "{\"name\": \"UI Programming\"}",
+			err:      errors.New("database is missing"),
+			expected: http.StatusInternalServerError,
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			r := &mock.Repository{
+				InsertCourseFunc: func(name string) (course.Course, error) {
+					return course.Course{
+						ID:   int64(1),
+						Name: name,
+					}, test.err
+				},
+			}
+			h := course.NewHandler(r)
+
+			w := httptest.NewRecorder()
+			req := httptest.NewRequest(http.MethodPost, "/api/course", strings.NewReader(test.request))
+
+			h.CreateCourse(w, req)
+			if w.Result().StatusCode != test.expected {
+				t.Errorf("expected response status code: %d, received: %d", test.expected, w.Result().StatusCode)
+			}
+		})
+	}
+}
+
 func TestUpdateCourse_Happy(t *testing.T) {
 	r := &mock.Repository{
 		UpdateCourseByIDFunc: func(id int64, name string) error {
