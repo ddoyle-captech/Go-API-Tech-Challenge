@@ -85,7 +85,7 @@ func TestInsertCourse_Happy(t *testing.T) {
 	}
 	defer db.Close()
 
-	mock.ExpectPrepare(`INSERT INTO course VALUES ($1)`).
+	mock.ExpectPrepare("INSERT INTO course VALUES \\(\\$1\\)").
 		ExpectExec().
 		WithArgs(courseName).
 		WillReturnResult(sqlmock.NewResult(1, 1))
